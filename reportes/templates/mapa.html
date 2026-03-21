@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapa de Mascotas</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 🔝 NAVBAR */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            z-index: 1000;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: #2c3e50;
+            color: white;
+            padding: 10px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar input {
+            padding: 5px;
+            width: 200px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .navbar button {
+            padding: 5px 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .menu-btn {
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* 📂 MENÚ DESPLEGABLE */
+        .menu {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background: #34495e;
+            padding-top: 60px;
+            transition: 0.3s;
+            z-index: 999;
+        }
+
+        .menu a {
+            display: block;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .menu a:hover {
+            background: #1abc9c;
+        }
+
+        /* 🗺️ MAPA */
+        #map {
+            height: calc(100vh - 60px);
+            margin-top: 60px;
+        }
+        /* 📦 POPUP PRO */
+        .popup-card {
+            width: 200px;
+            font-family: Arial, sans-serif;
+        }
+
+        .popup-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .popup-content {
+            padding: 5px;
+        }
+
+        .popup-content h3 {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+
+        .popup-content p {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+        }
+
+        .leaflet-control-zoom {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .leaflet-control-zoom a {
+            background-color: white;
+            color: black;
+            font-size: 18px;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- 🔝 NAVBAR -->
+<div class="navbar">
+    <span class="menu-btn" onclick="toggleMenu()">☰</span>
+    <input type="text" id="search" placeholder="Buscar dirección...">
+    <button onclick="buscarDireccion()">🔍</button>
+</div>
+
+<!-- 📂 MENÚ LATERAL -->
+<div id="menu" class="menu">
+    <a href="/registro/">Crear cuenta</a>
+    <a href="/login/">Iniciar sesión</a>
+    <a href="/logout/">Cerrar sesión</a>
+    <a href="#">Preguntas frecuentes</a>
+</div>
+
+<!-- 🗺️ MAPA -->
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    // 🔘 Abrir/cerrar menú
+    function toggleMenu() {
+        var menu = document.getElementById("menu");
+        if (menu.style.left === "0px") {
+            menu.style.left = "-250px";
+        } else {
+            menu.style.left = "0px";
+        }
+    }
+
+    // 🗺️ Mapa
+    var map = L.map('map', {
+                zoomControl: false
+            }).setView([-33.45, -70.66], 13);
+
+            // agregar control manual abajo izquierda
+            L.control.zoom({
+                position: 'bottomleft'
+            }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'OpenStreetMap'
+    }).addTo(map);
+
+    // 📦 Datos desde Django
+    var reportes = {{ reportes|safe }};
+    console.log(reportes);
+
+    reportes.forEach(r => {
+        L.marker([r.lat, r.lng])
+            .addTo(map)
+            .bindPopup(`
+                <div class="popup-card">
+                    ${r.imagen ? `<img src="${r.imagen}" class="popup-img">` : ""}
+                    
+                    <div class="popup-content">
+                        <h3>${r.titulo}</h3>
+                        <p>${r.descripcion}</p>
+                    </div>
+                </div>
+            `);
+    });
+
+     // 🔍 función buscar
+    function buscarDireccion() {
+        var query = document.getElementById("search").value;
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    var lat = data[0].lat;
+                    var lon = data[0].lon;
+
+                    map.setView([lat, lon], 15);
+
+                    L.marker([lat, lon])
+                        .bindPopup("Ubicación buscada");
+                } else {
+                    alert("No se encontró la dirección");
+                }
+            });
+    }
+
+    // ⌨️ ENTER para buscar (ESTO VA AL FINAL)
+    document.getElementById("search").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            buscarDireccion();
+        }
+    });
+</script>
+
+</body>
+</html>
