@@ -1,19 +1,53 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - PetMap</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
 </head>
 <body>
 
-<h2>Iniciar Sesión</h2>
+    <header class="navbar">
+        <a href="{% url 'index' %}" class="logo">🐾 PetMap</a>
+        <nav>
+            <a href="{% url 'login' %}">Iniciar sesión</a>
+            <a href="{% url 'registro' %}">Crear cuenta</a>
+        </nav>
+    </header>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Ingresar</button>
-</form>
+    <main class="login-container">
+        <div class="login-card">
+            <h2>Iniciar Sesión</h2>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="error-msg">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                {% if form.non_field_errors %}
+                    <div class="error-msg general-error">{{ form.non_field_errors|striptags }}</div>
+                {% endif %}
+                
+                <button type="submit" class="btn-submit">Ingresar</button>
+            </form>
+            
+            <a href="{% url 'registro' %}" class="register-link">¿No tienes cuenta? Regístrate aquí</a>
+        </div>
+    </main>
 
-<a href="/registro/">Crear cuenta</a>
+    <footer class="footer">
+        <p>&copy; 2026 Mapa de Mascotas. Todos los derechos reservados.</p>
+    </footer>
 
 </body>
 </html>

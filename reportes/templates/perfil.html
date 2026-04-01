@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - PetMap</title>
+    <link rel="stylesheet" href="{% static 'css/registro.css' %}">
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="{% url 'index' %}" class="logo">🐾 PetMap</a>
+        <nav>
+            <span class="user-greeting">¡Hola, {{ user.first_name|default:user.username }}! 🐾</span>
+            <a href="{% url 'perfil' %}">Mi Perfil</a>
+            <a href="{% url 'logout' %}" class="btn-logout" style="color: #e74c3c; font-weight: bold;">Cerrar Sesión</a>
+        </nav>
+    </header>
+
+    <main class="registro-container">
+        <div class="registro-card">
+            <h2>Datos de mi Perfil</h2>
+            <p style="color: #7f8c8d; margin-bottom: 20px;">Actualiza tu información personal.</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-grid">
+                    {% for field in form %}
+                        <div class="form-group {% if field.name == 'email' %}full-width{% endif %}">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="error-msg">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <button type="submit" class="btn-submit">Guardar Cambios</button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 Mapa de Mascotas. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

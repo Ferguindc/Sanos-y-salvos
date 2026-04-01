@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - Mapa de Mascotas</title>
+    
+    <style>
+        /* 🧹 RESET BÁSICO */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Asegura que el footer siempre quede abajo */
+        }
+
+        /* 🔝 NAVBAR */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 30px;
+            position: fixed; /* Se queda arriba al hacer scroll */
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar .logo {
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        .navbar nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .navbar nav a:hover {
+            color: #1abc9c;
+        }
+
+        /* 🦸‍♂️ HERO SECTION (IMAGEN GRANDE) */
+        .hero {
+            /* Ocupa todo el alto de la pantalla */
+            height: 100vh; 
+            /* Imagen de fondo de Unsplash (puedes cambiarla por la tuya) con un gradiente oscuro encima para que el texto se lea bien */
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                        url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80') center center/cover no-repeat;
+            
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            max-width: 600px;
+        }
+
+        /* 🔘 BOTÓN COMENZAR */
+        .btn-comenzar {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            color: white;
+            background-color: #1abc9c; /* Color verde menta estilo tu menú lateral */
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .btn-comenzar:hover {
+            background-color: #16a085;
+            transform: scale(1.05); /* Efecto de crecimiento suave */
+        }
+        /* Saludo al usuario */
+.user-greeting {
+    color: #f1c40f; /* Un color amarillo/dorado para destacar */
+    font-weight: bold;
+    margin-right: 15px;
+    font-size: 16px;
+}
+
+/* Botón de cerrar sesión un poco distinto para evitar accidentes */
+.navbar nav .btn-logout {
+    color: #e74c3c; /* Rojo suave */
+    font-weight: bold;
+}
+
+.navbar nav .btn-logout:hover {
+    color: #c0392b;
+}
+        /* 🦶 FOOTER */
+        .footer {
+            background-color: #2c3e50;
+            color: #bdc3c7;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto; /* Empuja el footer siempre al final */
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="{% url 'index' %}" class="logo">🐾 PetMap</a>
+        <nav>
+    {% if user.is_authenticated %}
+        
+        <span class="user-greeting">¡Hola, {{ user.first_name|default:user.username }}! 🐾</span>
+        <a href="{% url 'perfil' %}">Mi Perfil</a> <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+     
+    {% else %}
+        
+        <a href="{% url 'login' %}">Iniciar sesión</a>
+        <a href="{% url 'registro' %}">Crear cuenta</a>
+        
+    {% endif %}
+</nav>
+    </header>
+
+    <section class="hero">
+        <h1>Encuentra y Reporta</h1>
+        <p>Únete a nuestra comunidad. Ayuda a que las mascotas perdidas regresen a casa utilizando nuestro mapa en tiempo real.</p>
+        
+        <a href="{% url 'mapa' %}" class="btn-comenzar">¡Comenzar!</a>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2026 Mapa de Mascotas. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

@@ -1,9 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Mapa de Mascotas</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Mascotas - PetMap</title>
 
-    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
     <style>
@@ -19,20 +21,12 @@
             width: 100%;
             background: #2c3e50;
             color: white;
-            padding: 15px;
-            z-index: 1000;
-        }
-        .navbar {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: #2c3e50;
-            color: white;
             padding: 10px;
             z-index: 1000;
             display: flex;
             align-items: center;
             gap: 10px;
+            box-sizing: border-box;
         }
 
         .navbar input {
@@ -52,6 +46,7 @@
         .menu-btn {
             font-size: 20px;
             cursor: pointer;
+            padding: 0 10px;
         }
 
         /* 📂 MENÚ DESPLEGABLE */
@@ -80,9 +75,10 @@
 
         /* 🗺️ MAPA */
         #map {
-            height: calc(100vh - 60px);
-            margin-top: 60px;
+            height: calc(100vh - 50px);
+            margin-top: 50px;
         }
+
         /* 📦 POPUP PRO */
         .popup-card {
             width: 200px;
@@ -94,6 +90,7 @@
             height: 120px;
             object-fit: cover;
             border-radius: 8px;
+            margin-bottom: 5px;
         }
 
         .popup-content {
@@ -103,11 +100,13 @@
         .popup-content h3 {
             margin: 5px 0;
             font-size: 16px;
+            color: #2c3e50;
         }
 
         .popup-content p {
             font-size: 13px;
             color: #555;
+            margin: 0;
         }
 
         .leaflet-popup-content-wrapper {
@@ -134,34 +133,46 @@
             color: black;
             font-size: 18px;
         }
-
+        
+        /* Botón de reporte activo */
+        .btn-reportar-activo {
+            background: #c0392b !important;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
 
-<!-- 🔝 NAVBAR -->
 <div class="navbar">
     <span class="menu-btn" onclick="toggleMenu()">☰</span>
     <input type="text" id="search" placeholder="Buscar dirección...">
     <button onclick="buscarDireccion()">🔍</button>
+    
+    {% if user.is_authenticated %}
+        <button id="btn-reportar" onclick="activarModoAgregar()" style="background: #e74c3c; color: white; margin-left: auto; margin-right: 15px; font-weight: bold;">
+            📍 Reportar Mascota
+        </button>
+    {% endif %}
 </div>
 
-<!-- 📂 MENÚ LATERAL -->
 <div id="menu" class="menu">
-    <a href="/registro/">Crear cuenta</a>
-    <a href="/login/">Iniciar sesión</a>
-    <a href="/logout/">Cerrar sesión</a>
+    {% if user.is_authenticated %}
+        <a href="#" style="background: #2c3e50; font-weight: bold;">Hola, {{ user.first_name|default:user.username }}</a>
+        <a href="{% url 'perfil' %}">Mi Perfil</a>
+        <a href="{% url 'logout' %}">Cerrar sesión</a>
+    {% else %}
+        <a href="{% url 'registro' %}">Crear cuenta</a>
+        <a href="{% url 'login' %}">Iniciar sesión</a>
+    {% endif %}
     <a href="#">Preguntas frecuentes</a>
 </div>
 
-<!-- 🗺️ MAPA -->
 <div id="map"></div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-    // 🔘 Abrir/cerrar menú
+    // 🔘 ABRIR/CERRAR MENÚ
     function toggleMenu() {
         var menu = document.getElementById("menu");
         if (menu.style.left === "0px") {
@@ -171,30 +182,33 @@
         }
     }
 
-    // 🗺️ Mapa
+    // 🗺️ INICIALIZACIÓN DEL MAPA
     var map = L.map('map', {
-                zoomControl: false
-            }).setView([-33.45, -70.66], 13);
+        zoomControl: false
+    }).setView([-33.45, -70.66], 13);
 
-            // agregar control manual abajo izquierda
-            L.control.zoom({
-                position: 'bottomleft'
-            }).addTo(map);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: 'OpenStreetMap'
+    // Control de zoom abajo a la izquierda
+    L.control.zoom({
+        position: 'bottomleft'
     }).addTo(map);
 
-    // 📦 Datos desde Django
-    var reportes = {{ reportes|safe }};
-    console.log(reportes);
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        attribution: '© Mapbox © OpenStreetMap',
+        tileSize: 512,
+        zoomOffset: -1,
+        id: 'mapbox/streets-v12',
+        accessToken: 'pk.eyJ1IjoiZmVyZ3VpbjIzIiwiYSI6ImNtbjYzOXJ2YzAxbWMyc3EzbTUwanVtZmEifQ.GUiPoeVUgf-HlTp7WLPYJg'
+    }).addTo(map);
 
+    // 📦 CARGAR REPORTES EXISTENTES DESDE DJANGO
+    var reportes = {{ reportes|safe|default:"[]" }};
+    
     reportes.forEach(r => {
         L.marker([r.lat, r.lng])
             .addTo(map)
             .bindPopup(`
                 <div class="popup-card">
                     ${r.imagen ? `<img src="${r.imagen}" class="popup-img">` : ""}
-                    
                     <div class="popup-content">
                         <h3>${r.titulo}</h3>
                         <p>${r.descripcion}</p>
@@ -203,7 +217,67 @@
             `);
     });
 
-     // 🔍 función buscar
+    // 📍 LÓGICA PARA AGREGAR NUEVOS REPORTES
+    let modoAgregar = false;
+
+    function activarModoAgregar() {
+        modoAgregar = !modoAgregar;
+        let btn = document.getElementById('btn-reportar');
+        
+        if (modoAgregar) {
+            document.getElementById('map').style.cursor = 'crosshair';
+            btn.classList.add('btn-reportar-activo');
+            btn.innerText = "❌ Cancelar Reporte";
+            alert("📍 Haz clic en el lugar exacto del mapa donde viste o perdiste a la mascota.");
+        } else {
+            document.getElementById('map').style.cursor = '';
+            btn.classList.remove('btn-reportar-activo');
+            btn.innerText = "📍 Reportar Mascota";
+        }
+    }
+
+    // Guardamos el token CSRF en una variable JS para no romper el template literal
+    const csrfToken = '{{ csrf_token }}';
+
+    map.on('click', function(e) {
+        if (modoAgregar) {
+            let lat = e.latlng.lat;
+            let lng = e.latlng.lng;
+
+            // Formulario que se inyectará en el Popup
+            let formHTML = `
+                <div class="popup-card" style="width: 200px;">
+                    <h3 style="margin-top: 0; color: #e74c3c; font-size: 16px;">🐾 Nuevo Reporte</h3>
+                    
+                    <form action="{% url 'crear_reporte' %}" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                        <input type="hidden" name="lat" value="${lat}">
+                        <input type="hidden" name="lng" value="${lng}">
+                        
+                        <input type="text" name="titulo" placeholder="Ej: Perrito café" required style="width: 100%; box-sizing: border-box; margin-bottom: 8px; padding: 5px;">
+                        
+                        <textarea name="descripcion" placeholder="Descripción breve..." required style="width: 100%; box-sizing: border-box; margin-bottom: 8px; padding: 5px; height: 60px;"></textarea>
+                        
+                        <label style="font-size: 12px; color: #555;">Subir foto (opcional):</label>
+                        <input type="file" name="imagen" accept="image/*" style="width: 100%; margin-bottom: 10px; font-size: 12px;">
+                        
+                        <button type="submit" style="width: 100%; background: #2ecc71; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                            Guardar Reporte
+                        </button>
+                    </form>
+                </div>
+            `;
+
+            L.popup()
+                .setLatLng(e.latlng)
+                .setContent(formHTML)
+                .openOn(map);
+
+            activarModoAgregar(); // Desactiva el modo reporte tras abrir el globo
+        }
+    });
+
+    // 🔍 BUSCADOR DE DIRECCIONES
     function buscarDireccion() {
         var query = document.getElementById("search").value;
 
@@ -215,21 +289,59 @@
                     var lon = data[0].lon;
 
                     map.setView([lat, lon], 15);
-
-                    L.marker([lat, lon])
-                        .bindPopup("Ubicación buscada");
                 } else {
                     alert("No se encontró la dirección");
                 }
             });
     }
 
-    // ⌨️ ENTER para buscar (ESTO VA AL FINAL)
+    // ⌨️ ENTER para buscar
     document.getElementById("search").addEventListener("keypress", function(e) {
         if (e.key === "Enter") {
             buscarDireccion();
         }
     });
+
+    // 📍 GEOLOCALIZACIÓN EN TIEMPO REAL
+    let userMarker, userCircle;
+
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+            function(position) {
+                var lat = position.coords.latitude;
+                var lon = position.coords.longitude;
+                var accuracy = position.coords.accuracy;
+
+                if (!userMarker) {
+                    map.setView([lat, lon], 15);
+                    
+                    userMarker = L.marker([lat, lon]).addTo(map);
+                    userMarker.bindPopup("📍 Estás aquí").openPopup();
+
+                    userCircle = L.circle([lat, lon], {
+                        radius: accuracy,
+                        color: 'blue',
+                        fillColor: '#3498db',
+                        fillOpacity: 0.2
+                    }).addTo(map);
+                } else {
+                    userMarker.setLatLng([lat, lon]);
+                    userCircle.setLatLng([lat, lon]);
+                    userCircle.setRadius(accuracy); 
+                }
+            },
+            function(error) {
+                console.log("Error obteniendo ubicación:", error.message);
+            },
+            {
+                enableHighAccuracy: true, 
+                maximumAge: 10000,        
+                timeout: 5000             
+            }
+        );
+    } else {
+        alert("Tu navegador no soporta geolocalización");
+    }
 </script>
 
 </body>
